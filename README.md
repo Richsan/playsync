@@ -39,7 +39,7 @@ Go blocks executes in an event loop
 
 
 
-## Interest links:
+## Related useful links:
 - https://clojuredocs.org/clojure.core.async
 - https://medium.com/swlh/asynchronous-clojure-a59fa0f9bda0
 - https://joaoptrindade.com/clojure-tutorial-part-3-channels-go-blocks-sse
