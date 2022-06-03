@@ -13,17 +13,17 @@
 ;<!! = take function
 ;>!! = put function
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+;<! = take function for go blocks (release the go block instead to block)
+;>! = put function for go blocks (release the go block instead to block)
 
 (defn thread-id []
   "A helper function to get the current thread -id"
   (-> (Thread/currentThread)
     (.getId)))
 
-(println "Main Thread id = " (thread-id))
+(def main-thread-id (thread-id))
+
+(println "Main Thread id = " main-thread-id)
 
 (defn print-val [val]
   "A helper function to print value showing the thread id"
@@ -123,6 +123,41 @@
     (println "Taking the value to unblock the thread")
     (println (<!! c))))
 
+(defn creating-channel-from-array []
+  (let [counting-chan (async/to-chan!! [1 2 3 10])]
+    (dotimes [_ 4]
+      (println (<!! counting-chan)))))
+
+(defn mapping-chan-sample []
+  "the async/map function will take a set of channels
+   and provide the values as param to another function"
+  (let [num-chan      (async/to-chan!! [1 2])
+        even-or-odd-chan (async/map #(if (even? %)
+                                       "even"
+                                       "odd")
+                                    [num-chan])]
+    (dotimes [_ 2]
+            (println (<!! even-or-odd-chan)))))
+
+(defn division-mapping-chan-sample []
+  "the async/map function will take a set of channels
+   and provide the values as param to another function"
+  (let [divider       (chan)
+        divisor       (chan)
+        division-chan (async/map / [divider divisor])]
+    (put! divider 14)
+    (put! divisor 2)
+    (<!! division-chan)))
+
+(defn division-mapping-chan-sample-with-multiple-vals []
+  "the async/map function will take a set of channels
+   and provide the values as param to another function"
+  (let [divider       (async/to-chan!! [10 14 20])
+        divisor       (async/to-chan!! [2 2 2])
+        division-chan (async/map / [divider divisor])]
+    (dotimes [_ 3]
+      (println (<!! division-chan)))))
+
 (defn consuming-from-separated-thread []
  "If we have a dedicated thread to consume channel value, we can be unblocked"
   (let [c (chan)]
@@ -132,7 +167,7 @@
     (print-val "Will be executed after the channel be consummed")))
 
 (defn consuming-from-go-block []
-  "We can also use go blocks insted dedicated threads
+  "We can also use go blocks instead dedicated threads
   to be executed asynchronously by an event loop"
   (let [c (chan)]
     (go (println "Consuming from go block in thread -id " (thread-id))
@@ -164,13 +199,15 @@
 
 (defn mult-chan []
   "Multiplies content of a channel into two different channels"
-  (let [c (chan)
+  (let [our-multi-chan (chan)
         tap1 (chan)
         tap2 (chan)
-        c-mult (mult c)]
+        ;transforming our-multi-chan in a multi-chan
+        c-mult (mult our-multi-chan)]
+    ;a function to register the tap1 in our multi-chan
     (tap c-mult tap1)
     (tap c-mult tap2)
-    (>!! c "Hello")
+    (>!! our-multi-chan "Hello")
     (print-val (str "consumed from tap1 -> " (<!! tap1)))
     (print-val (str "consumed from tap2 -> " (<!! tap2)))))
 
